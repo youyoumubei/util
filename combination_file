@@ -1,0 +1,37 @@
+import csv
+
+def extract_and_match_data(file1, file2, file1_columns, file2_columns, file1_hit_column, file2_hit_column, output_file):
+    # read file1 data
+    with open(file1, 'r') as f1:
+        data1 = f1.readlines()
+
+    # read file2 data
+    with open(file2, 'r') as f2:
+        data2 = f2.readlines()
+
+    # extract column index
+    file1_columns = [int(i) - 1 for i in file1_columns]
+    file2_columns = [int(i) - 1 for i in file2_columns]
+
+    # create dict restore match result
+    match_data = {}
+
+    # insert data from file2
+    for line in data2:
+        line = line.strip().split('|')
+        hit_value = line[file2_hit_column - 1]
+        match_data[hit_value] = line
+
+    # search and combination columns, load data into csv
+    with open(output_file, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for line in data1:
+            line = line.strip().split('|')
+            hit_value = line[file1_hit_column - 1]
+            if hit_value in match_data:
+                matched_line = match_data[hit_value]
+                output_line = [matched_line[idx] for idx in file2_columns]
+                output_line.extend([line[idx] for idx in file1_columns])
+                writer.writerow(output_line)
+
+    print("Extraction and matching completed. Output file:", output_file)
