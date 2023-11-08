@@ -1,0 +1,70 @@
+def parse_jil_content(jil_content):
+    jobs_and_boxes = {}  # 用字典存储作业和盒子，键是名称，值是子项的列表
+    current_item = None
+
+    # 按行解析 JIL 文件内容
+    for line in jil_content.splitlines():
+        line = line.strip()
+
+        # 忽略注释行和空行
+        if line.startswith('#') or not line:
+            continue
+
+        # 判断是否是作业的开始行
+        if line.startswith('insert_job:'):
+            # 如果当前有解析到的项目信息，将其添加到字典
+            if current_item:
+                jobs_and_boxes[current_item['name']] = current_item
+
+            # 创建新的项目信息字典
+            current_item = {'name': line.split(':')[1].strip(), 'type': None, 'children': []}
+        elif line.startswith('job_type:'):
+            current_item['type'] = line.split(':')[1].strip()
+        elif line.startswith('box_name:'):
+            current_item['box_name'] = line.split(':')[1].strip()
+
+    # 将最后一个项目添加到字典
+    if current_item:
+        jobs_and_boxes[current_item['name']] = current_item
+
+    return jobs_and_boxes
+
+def build_dependency_tree(jobs_and_boxes_data):
+    parent_tree = {}
+
+    for name, item in jobs_and_boxes_data.items():
+        if item['type'] == 'BOX' and 'box_name' not in item:
+            parent_tree[name] = []
+            for child in item['children']:
+                parent_tree[name].append(child['name'])
+                parent_tree.update({child['name']: [] for child in item['children']})
+
+    return parent_tree
+
+def print_dependency_tree(tree, node, depth=0):
+    print("  " * depth + node)
+    if node in tree:
+        for child in tree[node]:
+            print_dependency_tree(tree, child, depth + 1)
+
+# JIL 文件内容
+jil_content = """
+insert_job: BOX1   job_type:BOX
+insert_job: FW1    box_name:BOX1
+insert_job: CMD1   box_name:BOX1
+insert_job: CMD2   box_name:BOX1
+insert_job: CMD3   box_name:BOX1
+insert_job: BOX2   job_type:BOX
+insert_job: CMD4   box_name:BOX2
+insert_job: BOX3   job_type:BOX
+insert_job: CMD5   box_name:BOX3
+"""
+
+# 解析 JIL 内容
+jobs_and_boxes_data = parse_jil_content(jil_content)
+
+# 构建依赖关系树
+dependency_tree = build_dependency_tree(jobs_and_boxes_data)
+
+# 打印依赖关系树
+print_dependency_tree(dependency_tree, 'BOX1')
