@@ -1,0 +1,101 @@
+import re
+
+def parse_jil_content(jil_content):
+    job_contents = re.split(r'\binsert_job:', jil_content)[1:]  # 跳过第一个空字符串
+
+    jil_dependency_dict = {}
+    current_box = None
+
+    for job_content in job_contents:
+        job_lines = job_content.splitlines()
+
+        job_name = None
+        job_type = None
+        box_name = None
+
+        for line in job_lines:
+            # 解析 insert_job 和 job_type
+            job_match = re.match(r'(\w+)\s*job_type:\s*(\w+)', line)
+            if job_match:
+                job_name, job_type = job_match.groups()
+
+            # 解析 box_name
+            box_match = re.match(r'\s*box_name:\s*(\S+)', line)
+            if box_match:
+                box_name = box_match.group(1)
+
+        # 处理 BOX 类型
+        if job_type == 'BOX':
+            if box_name:
+                if box_name not in jil_dependency_dict:
+                    jil_dependency_dict[box_name] = {
+                        'jil_content': '',
+                        'children': {}
+                    }
+                jil_dependency_dict[box_name]['children'][job_name] = {
+                    'jil_content': '',
+                    'children': {}
+                }
+                current_box = box_name
+            else:
+                jil_dependency_dict[job_name] = {
+                    'jil_content': '',
+                    'children': {}
+                }
+                current_box = job_name
+        else:
+            # 处理 CMD 和 FW 类型
+            if current_box:
+                jil_dependency_dict[current_box]['children'][job_name] = {
+                    'jil_content': '',
+                    'children': {}
+                }
+            else:
+                jil_dependency_dict[job_name] = {
+                    'jil_content': '',
+                    'children': {}
+                }
+
+        # 处理 jil_content
+        if current_box or job_name:
+            if current_box:
+                jil_dependency_dict[current_box]['children'][job_name]['jil_content'] += job_content + '\n'
+            else:
+                jil_dependency_dict[job_name]['jil_content'] += job_content + '\n'
+
+    return jil_dependency_dict
+
+# 示例 JIL 内容
+jil_content = """
+insert_job: BOX1   job_type:BOX
+insert_job: CMD1   job_type:CMD
+insert_job: CMD2   job_type:CMD
+insert_job: BOX2   job_type:BOX
+insert_job: CMD3   job_type:CMD
+box_name: BOX1
+insert_job: CMD4   job_type:CMD
+"""
+
+# 解析 JIL 内容
+jil_dependency_dict = parse_jil_content(jil_content)
+
+# 打印输出
+print("JIL Dependency Dict:", jil_dependency_dict)
+
+
+# 示例 JIL 内容
+jil_content = """
+insert_job: BOX1   job_type:BOX
+insert_job: CMD1   job_type:CMD
+insert_job: CMD2   job_type:CMD
+insert_job: BOX2   job_type:BOX
+insert_job: CMD3   job_type:CMD
+box_name: BOX1
+insert_job: CMD4   job_type:CMD
+"""
+
+# 解析 JIL 内容
+jil_dependency_dict = parse_jil_content(jil_content)
+
+# 打印输出
+print("JIL Dependency Dict:", jil_dependency_dict)
