@@ -1,0 +1,56 @@
+def parse_jobs(input_string):
+    jobs = {}
+    lines = input_string.split("\n")
+
+    for line in lines:
+        if line.startswith("insert_job"):
+            current_job = line.split(":")[1].strip()
+            jobs[current_job] = {"dependencies": []}
+        elif line.startswith("box_name"):
+            dependency = line.split(":")[1].strip()
+            jobs[current_job]["dependencies"].append(dependency)
+
+    return jobs
+
+def reorder_jobs(jobs):
+    ordered_jobs = []
+
+    while jobs:
+        for job, data in jobs.items():
+            dependencies = data["dependencies"]
+            if all(dep in ordered_jobs for dep in dependencies):
+                ordered_jobs.append(job)
+                del jobs[job]
+                break
+
+    return ordered_jobs
+
+input_string = """
+/* ----- job_a ----- */
+insert_job: job_a
+
+/* ----- job_b ----- */
+insert_job: job_b
+box_name: job_a
+
+/* ----- job_c ----- */
+insert_job: job_c
+box_name: job_b
+
+/* ----- job_d ----- */
+insert_job: job_d
+box_name: job_c
+
+/* ----- job_e ----- */
+insert_job: job_e
+box_name: job_b
+
+/* ----- job_f ----- */
+insert_job: job_f
+box_name: job_a
+"""
+
+jobs = parse_jobs(input_string)
+ordered_jobs = reorder_jobs(jobs)
+
+print("Ordered Jobs:", ordered_jobs)
