@@ -25,6 +25,36 @@ def reorder_jobs(jobs):
 
     return ordered_jobs
 
+import re
+
+input_string = "s(job_a) & n(job_b) | s(job_c)"
+
+# Define a regular expression pattern to match job names
+pattern = re.compile(r'\b([a-zA-Z_]\w*)\b')
+
+# Find all matches in the input string
+matches = pattern.findall(input_string)
+
+# Filter out duplicates (if any)
+unique_jobs = list(set(matches))
+
+print("Job names:", unique_jobs)
+
+
+input_string = "s(job_a, 1.0) & n(job_b) | s(job_c)"
+
+# Define a regular expression pattern to match job names
+pattern = re.compile(r'\b([a-zA-Z_]\w*)(?=\s*\()')
+
+# Find all matches in the input string
+matches = pattern.findall(input_string)
+
+# Filter out duplicates (if any)
+unique_jobs = list(set(matches))
+
+print("Job names:", unique_jobs)
+
+
 input_string = """
 /* ----- job_a ----- */
 insert_job: job_a
